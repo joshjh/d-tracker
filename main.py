@@ -12,7 +12,7 @@ import re
 
 GLO_SERVER_ADD = 'joshjh.dyndns-home.com'
 GLO_SERVER_PORT = 42753
-PAGEFILE = '/home/josh/test.html'
+PAGEFILE = '/var/www/dt/index.html'
 
 class d_tracker_client(object):
 
@@ -78,7 +78,7 @@ class hcs_socket_listen(object):
 
     def __init__(self, dt):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('sopra', GLO_SERVER_PORT))
+        s.bind((socket.gethostname(), GLO_SERVER_PORT))
         s.listen(5)
 
         while True:
