@@ -7,11 +7,12 @@ import socket
 import subprocess
 import datetime
 from time import sleep
-import html
+import markup
 import re
 
-GLO_SERVER_ADD = 'sopra'
+GLO_SERVER_ADD = 'joshjh.dyndns-home.com'
 GLO_SERVER_PORT = 42753
+PAGEFILE = '/home/josh/test.html'
 
 class d_tracker_client(object):
 
@@ -21,11 +22,11 @@ class d_tracker_client(object):
                                   GLO_SERVER_ADD, GLO_SERVER_PORT)
 
         while True:
-            if self.lastalivedate + datetime.timedelta(seconds=5) < datetime.datetime.today():
+            if self.lastalivedate + datetime.timedelta(seconds=3500) < datetime.datetime.today():
                 send_handler.send("{} at: ('{}')('{}')".format(self.__checkin__(), self.__gettime__(), socket.gethostname()),
                                   GLO_SERVER_ADD, GLO_SERVER_PORT)
             else:
-                sleep(15)
+                sleep(3600)
 
     def __gettime__(self):
         self.lastalivedate = datetime.datetime.today()
@@ -59,9 +60,19 @@ class d_tracker_server(object):
             self.__genpage__()
 
     def __genpage__(self):
-        htmlcode = html.escape('hello')
-        print(htmlcode)
-
+        title = "Josh's RPI devices"
+        header = 'Known running entities'
+        footer = 'created at {}'.format(datetime.datetime.today())
+        styles = ('layout.css', 'alt.css', 'images.css')
+        self.page = markup.page()
+        self.page.init(css=styles, title=title, header = header, footer=footer)
+        self.page.br()
+        self.page.ul(class_='mylist')
+        self.page.li(self.rpis, class_='myitem')
+        self.page.ul.close()
+        with open(PAGEFILE, 'w') as f:
+            f.write(str(self.page))
+            f.close()
 
 class hcs_socket_listen(object):
 
