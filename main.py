@@ -117,10 +117,10 @@ class hcs_socket_send(object):
 
 def main(client=False, server=False):
 
-    if client:
+    if client == True:
             send_handler = hcs_socket_send()
             dt = d_tracker_client(send_handler)
-    elif server:
+    elif server == True:
         dt = d_tracker_server()
         listener = hcs_socket_listen(dt)
     else:
