@@ -11,34 +11,40 @@ import markup
 import re
 
 GLO_SERVER_ADD = 'joshjh.dyndns-home.com'
-GLO_SERVER_PORT = 42753
+GLO_SERVER_PORT = 21954 
 PAGEFILE = '/var/www/dt/index.html'
 
 class d_tracker_client(object):
 
     def __init__(self, send_handler):
-
+        # these send calls are a little ugly, might be work unpacking a tupple for parameters
+        print('attemping to send first update')
         send_handler.send("{} at: ('{}')('{}')".format(self.__checkin__(), self.__gettime__(), socket.gethostname()),
                                   GLO_SERVER_ADD, GLO_SERVER_PORT)
-
+        print('sent first update')
         while True:
             if self.lastalivedate + datetime.timedelta(seconds=3500) < datetime.datetime.today():
-                send_handler.send("{} at: ('{}')('{}')".format(self.__checkin__(), self.__gettime__(), socket.gethostname()),
-                                  GLO_SERVER_ADD, GLO_SERVER_PORT)
+                send_handler.send("{} at: ('{}')('{}')".format(self.__checkin__(), self.__gettime__(),
+                socket.gethostname()), GLO_SERVER_ADD, GLO_SERVER_PORT)
             else:
                 sleep(3600)
 
     def __gettime__(self):
+        """ Returns the current time, whist setting that as the last update time, as that's the only time it's called.
+        Returns self.lastalivedate as string
+        """
         self.lastalivedate = datetime.datetime.today()
         return str(self.lastalivedate)
 
     def __checkin__(self):
         """ gets the external ip from a website and local ip, returns it as string in a tupple"""
+        print('getting IP info')
         http = urllib3.PoolManager()
         r = http.request('GET', 'http://ipecho.net/plain')
         intf = 'wlan0'
         intf_ip = subprocess.check_output("/bin/ip address show dev " + intf, shell=True).decode().split()
         intf_ip = intf_ip[intf_ip.index('inet') + 1].split('/')[0]
+        print('got IP info')
         return (r.data.decode(), intf_ip)
 
 class d_tracker_server(object):
@@ -78,7 +84,7 @@ class hcs_socket_listen(object):
 
     def __init__(self, dt):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((socket.gethostname(), GLO_SERVER_PORT))
+        s.bind(('', GLO_SERVER_PORT))
         s.listen(5)
 
         while True:
@@ -109,27 +115,21 @@ class hcs_socket_send(object):
             self.s.close()
 
 
-def main(arg):
-    client = False  # not very clean but avoids try arguement catching whilst testing if client
-    server = False
-    if arg == '--client':
-        client = True
-    elif arg == '--server':
-        server = True
-    else:
-        print('d_tracker must by run with the switch --client or --server')
-        sys.exit()
+def main(client=False, server=False):
 
     if client:
             send_handler = hcs_socket_send()
             dt = d_tracker_client(send_handler)
-
-    else:
+    elif server:
         dt = d_tracker_server()
         listener = hcs_socket_listen(dt)
+    else:
+        print('you must specify client or server')
 
 
 # boilerplate
 
 if __name__ == '__main__':
+    if sys.argv[1] == 'client': main(client=True)
+
     main(sys.argv[1])
