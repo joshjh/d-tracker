@@ -131,5 +131,6 @@ def main(client=False, server=False):
 
 if __name__ == '__main__':
     if sys.argv[1] == 'client': main(client=True)
+    elif sys.argv[1] == 'server': main(server=True)
 
     main(sys.argv[1])
