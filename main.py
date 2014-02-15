@@ -18,18 +18,40 @@ class d_tracker_client(object):
 
     def __init__(self, send_handler):
         # these send calls are a little ugly, might be work unpacking a tupple for parameters
+        self.portforwarded = False
         print('attemping to send first update')
         print("{} at: ('{}')('{}')".format(self.__checkin__(), self.__gettime__(), socket.gethostname()),
                                   GLO_SERVER_ADD, GLO_SERVER_PORT)
         send_handler.send("{} at: ('{}')('{}')".format(self.__checkin__(), self.__gettime__(), socket.gethostname()),
                                   GLO_SERVER_ADD, GLO_SERVER_PORT)
         print('sent first update')
+        self.upnp_forward()
+
         while True:
             if self.lastalivedate + datetime.timedelta(seconds=3500) < datetime.datetime.today():
                 send_handler.send("{} at: ('{}')('{}')".format(self.__checkin__(), self.__gettime__(),
                 socket.gethostname()), GLO_SERVER_ADD, GLO_SERVER_PORT)
             else:
                 sleep(3600)
+
+    def upnp_forward(self):
+        ownip = self.__checkin__()[1]
+        try:
+            # see if upnpc is accessable...
+            upnp_response = subprocess.check_output("/usr/bin/upnpc -l", shell=True, ).decode()
+            current_forwards = re.findall(r'\d+->.*:\d\d', upnp_response)
+            # this is ugly but we cannot else as this will forward ports for each non matching list item
+            for x in current_forwards:
+                if ownip in x and x[:2] == '22': # interested in ssh only
+                    print('already port forwarded as follows: ', x)
+                    self.portforwarded = True
+
+            if self.portforwarded == False:
+                we_ran = subprocess.check_output('/usr/bin/upnpc -a {} 22 22 tcp'.format(ownip), shell=True)
+                print ('forwarding port with: ', we_ran.decode())
+
+        except FileNotFoundError:
+            print('cannot run upnpc.  is it installed/accessable?')
 
     def __gettime__(self):
         """ Returns the current time, whist setting that as the last update time, as that's the only time it's called.
@@ -74,14 +96,14 @@ class d_tracker_server(object):
                 if (x[0]) and (x[1]) in dev:
                     print(x, 'known in rpis')
 
-            else:
-                self.rpis.append(x + y)
-                #print('appended:', x)
-                #print (self.rpis)
-                self.__genpage__()
+                else:
+                    self.rpis.append(x + y)
+                    print('appended:', x)
+                    print (self.rpis)
+                    self.__genpage__()
 
         except IndexError as e:
-            print('unable to slice recieved data to append')
+            print('unable to slice data to append')
 
     def __genpage__(self):
         title = "Josh's RPI devices"
