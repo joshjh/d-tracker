@@ -112,12 +112,13 @@ class d_tracker_server(object):
             for dev in self.rpis:
                 if (x[0]) and (x[1]) in dev:
                     print('d-tracker: ', x, 'known in rpis')
+                    entryfound = 1
 
-                else:
-                    self.rpis.append(x + y)
-                    print('d-tracker: appended:', x)
-                    print (self.rpis)
-                    self.__genpage__()
+            if not entryfound in locals():
+                self.rpis.append(x + y)
+                print('d-tracker: appended:', x)
+                print (self.rpis)
+                self.__genpage__()
 
         except IndexError as e:
             print('unable to slice data to append')
