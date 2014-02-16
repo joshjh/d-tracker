@@ -114,7 +114,7 @@ class d_tracker_server(object):
                     print('d-tracker: ', x, 'known in rpis')
                     entryfound = 1
 
-            if not entryfound in locals():
+            if not 'entryfound' in locals():
                 self.rpis.append(x + y)
                 print('d-tracker: appended:', x)
                 print (self.rpis)
@@ -196,7 +196,10 @@ def main(client=False, server=False):
 # boilerplate
 
 if __name__ == '__main__':
-    if sys.argv[1] == 'client': main(client=True)
-    elif sys.argv[1] == 'server': main(server=True)
+    try:
+        if sys.argv[1] == 'client': main(client=True)
 
-    main(sys.argv[1])
+        elif sys.argv[1] == 'server': main(server=True)
+
+    except IndexError:
+        print(' You must specify client or server')
